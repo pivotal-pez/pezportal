@@ -1,8 +1,8 @@
-var pezAuth = angular.module('pezAuth', [], function($interpolateProvider) {
+var pezPortal = angular.module('pezPortal', [], function($interpolateProvider) {
       $interpolateProvider.startSymbol('{*{');
       $interpolateProvider.endSymbol('}*}');
   })
-  .controller('PezAuthController', function($scope, $http, $timeout, $window) {
+  .controller('PezPortalController', function($scope, $http, $timeout, $window) {
     $scope.hideCLIExample = true;
     var myData = {};
     var pauth = this;
@@ -17,6 +17,7 @@ var pezAuth = angular.module('pezAuth', [], function($interpolateProvider) {
       "oktaSetup": "Get Okta Tile for HeritageCF",
       "invalidUser": "query failed. unable to find matching user guid."
     };
+    
     var urls = {
       "okta": "http://login.run.pez.pivotal.io/saml/login/alias/login.run.pez.pivotal.io?disco=true",
       "oktaHome": "https://pivotal.okta.com/app/UserHome"
@@ -26,11 +27,11 @@ var pezAuth = angular.module('pezAuth', [], function($interpolateProvider) {
       callMeUsingVerb($http.get, meUri);
     }, 1);
 
-    function getRestUri() {
+    pauth.getRestUri = function() {
       return [restUriBase, $scope.myEmail].join("/");
     }
 
-    function getOrgRestUri() {
+    pauth.getOrgRestUri = function() {
       return [restOrgUriBase, $scope.myEmail].join("/");
     }
 
@@ -42,7 +43,7 @@ var pezAuth = angular.module('pezAuth', [], function($interpolateProvider) {
     pauth.createorg = function() {
 
       if ($scope.orgButtonText === messaging.createOrgBtn) {
-        createOrg(getOrgRestUri());
+        createOrg(this.getOrgRestUri());
 
       } else if ($scope.orgButtonText === messaging.hasOrgBtn) {
         $window.location.href = urls.okta;
@@ -54,11 +55,11 @@ var pezAuth = angular.module('pezAuth', [], function($interpolateProvider) {
     };
 
     pauth.create = function() {
-      callAPIUsingVerb($http.put, getRestUri());
+      callAPIUsingVerb($http.put, this.getRestUri());
     };
 
     pauth.remove = function() {
-      callAPIUsingVerb($http.delete, getRestUri());
+      callAPIUsingVerb($http.delete, this.getRestUri());
     };
 
     function callMeUsingVerb(verbCaller, uri) {
@@ -67,7 +68,7 @@ var pezAuth = angular.module('pezAuth', [], function($interpolateProvider) {
           $scope.myName = data.Payload.displayName;
           $scope.myEmail = data.Payload.emails[0].value;
           $scope.displayName = $scope.myName ? $scope.myName : $scope.myEmail
-          callAPIUsingVerb($http.get, getRestUri());
+          callAPIUsingVerb($http.get, this.getRestUri());
           pauth.getorg();
       });
     }
@@ -118,6 +119,7 @@ var pezAuth = angular.module('pezAuth', [], function($interpolateProvider) {
 
     function callAPIUsingVerb(verbCaller, uri) {
       var responsePromise = verbCaller(uri);
+            
       responsePromise.success(function(data, status, headers, config) {
           $scope.myData = data;
           $scope.myApiKey = data.APIKey;
@@ -126,6 +128,6 @@ var pezAuth = angular.module('pezAuth', [], function($interpolateProvider) {
       responsePromise.error(function(data, status, headers, config) {
         $scope.myApiKey = messaging.noApiKey;
         pauth.create();
-      });
+      });      
     }
   });
